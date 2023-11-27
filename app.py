@@ -9,12 +9,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
-from db import crud
+from db import crud, models
 from db.engine import SessionLocal, engine
 
 
 load_dotenv()
-
+models.Base.metadata.create_all(bind=engine)
 
 def callback(ch, method, properties, body):
     body: dict = json.loads(body)
