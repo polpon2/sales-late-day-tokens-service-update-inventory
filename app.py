@@ -69,6 +69,8 @@ def main():
 
 if __name__ == '__main__':
     try:
+        db: Session = SessionLocal()
+        update = crud.create_inventory(db=db, token_name='token1', amount=100)
         main()
     except KeyboardInterrupt:
         print('Interrupted')
