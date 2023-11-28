@@ -14,7 +14,14 @@ from db.engine import SessionLocal, engine
 
 
 load_dotenv()
-models.Base.metadata.create_all(bind=engine)
+
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 def callback(ch, method, properties, body):
     body: dict = json.loads(body)
@@ -26,14 +33,14 @@ def callback(ch, method, properties, body):
     print(f" [x] Received {body}")
 
     # update inventory.
-    db: Session = SessionLocal()
-    
+    db: Session = get_db()
+
     update = crud.update_inventory(db=db, token_name=token_name, amount=amount)
     if (update):
         print(f"update inventory success")
     else:
         print(f"roll back")
-    
+
 
     ch.queue_declare(queue='from.inventory')
 
@@ -54,6 +61,10 @@ def main():
     except:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
 
+    models.Base.metadata.create_all(bind=engine)
+    db: Session = SessionLocal()
+    update = crud.create_inventory(db=db, token_name='token1', amount=100)
+
     channel = connection.channel()
 
     channel.queue_declare(queue='to.inventory', arguments={
@@ -69,8 +80,6 @@ def main():
 
 if __name__ == '__main__':
     try:
-        db: Session = SessionLocal()
-        update = crud.create_inventory(db=db, token_name='token1', amount=100)
         main()
     except KeyboardInterrupt:
         print('Interrupted')
