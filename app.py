@@ -1,4 +1,6 @@
 import asyncio, aio_pika, json
+from async_timeout import timeout
+from asyncio import TimeoutError
 from db.engine import SessionLocal, engine
 from db import crud, models
 
@@ -7,27 +9,36 @@ async def process_message(
     connection: aio_pika.Connection,  # Add connection parameter
 ) -> None:
     async with message.process():
-        body: dict = json.loads(message.body)
+        try:
+            async with timeout(1.5):
+                body: dict = json.loads(message.body)
 
-        print(f" [x] Received {body}")
+                print(f" [x] Received {body}")
 
-        # Manage Inventory.
-        async with SessionLocal() as db:
-            update = await crud.update_inventory(db=db, token_name="late_token", amount=1)
-            if (update):
-                routing_key = "from.inventory"
+                # Manage Inventory.
+                async with SessionLocal() as db:
+                    update = await crud.update_inventory(db=db, token_name="late_token", amount=1)
+                    if (update):
+                        routing_key = "from.inventory"
 
-                channel = await connection.channel()
+                        channel = await connection.channel()
 
-                await channel.default_exchange.publish(
-                    aio_pika.Message(body=message.body),
-                    routing_key=routing_key,
-                )
-                print(f"update inventory success")
-                await db.commit()
-            else:
-                await process_rb_status(message=message, connection=connection, status="INSUFFICIENT_INVENTORY")
-                print(f"roll back")
+                        await channel.default_exchange.publish(
+                            aio_pika.Message(body=message.body),
+                            routing_key=routing_key,
+                        )
+                        print(f"update inventory success")
+                        await db.commit()
+                    else:
+                        await process_rb_status(message=message, connection=connection, status="INSUFFICIENT_INVENTORY")
+                        print(f"roll back")
+        except TimeoutError:
+            # Roll Back from Timed Out
+            await process_rb_status(message=message, connection=connection, status="TIMEOUT")
+            print("Timed Out Rolling Back....")
+        except Exception as e:
+            await process_rb_status(message=message, connection=connection)
+            print(f"Error: {e}, Rolling Back...")
 
 
 async def process_rb(
