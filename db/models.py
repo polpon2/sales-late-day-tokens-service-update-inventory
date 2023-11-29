@@ -11,4 +11,5 @@ class Inventory(Base):
     token_name = Column(String(255), unique=True, index=True)
     total_amount = Column(Integer, default=10)
 
-
+    def __repr__(self):
+        return f"<Inventory(token_name={self.token_name}, total_amount={self.total_amount})>"
