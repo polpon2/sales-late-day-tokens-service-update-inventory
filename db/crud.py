@@ -15,7 +15,6 @@ async def update_inventory(db: AsyncSession, token_name: str, amount: int):
     if inventory:
         if inventory.total_amount - amount > 0:
             await db.execute(models.Inventory.__table__.update().where(models.Inventory.token_name == token_name).values({'total_amount': inventory.total_amount - amount}))
-            await db.commit()
             return True
         return False
     return False

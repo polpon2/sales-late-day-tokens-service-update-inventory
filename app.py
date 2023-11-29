@@ -27,6 +27,7 @@ async def process_message(
                     routing_key=routing_key,
                 )
                 print(f"update inventory success")
+                await db.commit()
             else:
                 print(f"roll back")
 
@@ -48,7 +49,7 @@ async def main() -> None:
 
         # Init Value
         await conn.execute(
-            models.Inventory.__table__.insert(), [{"token_name": "late_token", "total_amount": 5}]
+            models.Inventory.__table__.insert(), [{"token_name": "late_token", "total_amount": 500}]
         )
 
     queue_name = "to.inventory"
