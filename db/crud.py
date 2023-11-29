@@ -19,6 +19,13 @@ async def update_inventory(db: AsyncSession, token_name: str, amount: int):
         return False
     return False
 
+async def roll_back_inventory(db: AsyncSession, token_name: str, amount: int):
+    inventory = await get_inventory(db=db, token_name="late_token")
+    if inventory:
+        await db.execute(models.Inventory.__table__.update().where(models.Inventory.token_name == token_name).values({'total_amount': inventory.total_amount + amount}))
+        return True
+    return False
+
 async def create_inventory(db: AsyncSession, amount: int):
     inventory = await get_inventory(db=db, token_name="late_token")
     if inventory is None:
