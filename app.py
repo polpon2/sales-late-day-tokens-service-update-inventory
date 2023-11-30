@@ -13,11 +13,13 @@ async def process_message(
             async with timeout(1.5):
                 body: dict = json.loads(message.body)
 
+                amount = body["amount"]
+
                 print(f" [x] Received {body}")
 
                 # Manage Inventory.
                 async with SessionLocal() as db:
-                    update = await crud.update_inventory(db=db, token_name="late_token", amount=1)
+                    update = await crud.update_inventory(db=db, token_name="late_token", amount=amount)
                     if (update):
                         routing_key = "from.inventory"
 
