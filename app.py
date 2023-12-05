@@ -32,6 +32,14 @@ async def process_message(
 
                 amount = body["amount"]
 
+                kill_inventory = body["kill_inventory"]
+                timeout_inventory = body["timeout_inventory"]
+
+                if kill_inventory:
+                    raise Exception("Forced Kill Inventory")
+                elif timeout_inventory:
+                    await asyncio.sleep(5)
+
                 print(f" [x] Received {body}")
 
                 # Manage Inventory.
