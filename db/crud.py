@@ -13,7 +13,7 @@ async def get_inventory(db: AsyncSession, token_name: str):
 async def update_inventory(db: AsyncSession, token_name: str, amount: int):
     inventory = await get_inventory(db=db, token_name="late_token")
     if inventory:
-        if inventory.total_amount - amount > 0:
+        if inventory.total_amount - amount >= 0:
             await db.execute(models.Inventory.__table__.update().where(models.Inventory.token_name == token_name).values({'total_amount': inventory.total_amount - amount}))
             return True
         return False
